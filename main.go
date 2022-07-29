@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // Define a home handler function which writes a byte slice containing
@@ -18,8 +20,15 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 // Add a snippetView handler function.
 func snippetView(w http.ResponseWriter, r *http.Request) {
-	testHeaderMap(w)
-	w.Write([]byte("Display a specific snippet..."))
+	//testHeaderMap(w)
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
+		return
+	}
+	// Use the fmt.Fprintf() function to interpolate the id value with our response
+	// and write it to the http.ResponseWriter.
+	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
 }
 
 func testHeaderMap(w http.ResponseWriter) {
