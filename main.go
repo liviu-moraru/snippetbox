@@ -18,16 +18,29 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 // Add a snippetView handler function.
 func snippetView(w http.ResponseWriter, r *http.Request) {
+	testHeaderMap(w)
 	w.Write([]byte("Display a specific snippet..."))
+}
+
+func testHeaderMap(w http.ResponseWriter) {
+	//w.Header().Set("Cache-Control", "public, max-age=31536000")
+	w.Header().Add("Cache-Control", "public")
+	w.Header().Add("Cache-control", "max-age-31536000")
+	//w.Header().Del("Cache-Control")
+	w.Header()["Date"] = nil
+	log.Println("Cache-Control:", w.Header().Get("Cache-Control"))
+	log.Println("Cache-Controls:", w.Header().Values("Cache-Control"))
 }
 
 // Add a snippetCreate handler function.
 func snippetCreate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.Header().Set("Allow", http.MethodPost)
+		http.Error(w, "Method now allowed", http.StatusMethodNotAllowed)
+		/*w.WriteHeader(405)
+		w.Write([]byte("Method not allowed"))*/
+	}
 	w.Write([]byte("Create a new snippet..."))
-}
-
-func fooView(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Foo view..."))
 }
 
 func main() {
@@ -38,9 +51,8 @@ func main() {
 	mux.HandleFunc("/", home)
 	mux.HandleFunc("/snippet/view", snippetView)
 	mux.HandleFunc("/snippet/create", snippetCreate)
-	mux.HandleFunc("foo/", fooView)
-
 	log.Println("Starting server on :4000")
 	err := http.ListenAndServe(":4000", mux)
 	log.Fatal(err)
+
 }
