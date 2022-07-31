@@ -1,0 +1,26 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{template "title" .}}</title>
+</head>
+<body>
+    <header>
+        <h1><a href="/">Snippetbox</a></h1>
+    </header>
+    <!-- Invoke the navigation template -->
+    {{template "nav" .}}
+    <main>
+        {{template "main" .}}
+    </main>
+    <!-- {{block "sidebar" .}}
+
+    {{end}} -->
+    {{block "sidebar" .}}
+        <p>My default sidebar content</p>
+    {{end}}
+    <footer>Powered by <a href="https://golang.org">Go</a></footer>
+</body>
+</html>
+{{end}}
