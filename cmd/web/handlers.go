@@ -5,11 +5,41 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"path"
 	"strconv"
 )
 
-// Define a home handler function which writes a byte slice containing
-// "Hello from Snippetbox" as the response body.
+type neuteredFileSystem struct {
+	fs http.FileSystem
+}
+
+func (nfs neuteredFileSystem) Open(name string) (file http.File, err error) {
+	f, err := nfs.fs.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	fi, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if fi.IsDir() {
+		index := path.Join(name, "index.html")
+		indexFile, err := nfs.fs.Open(index)
+		if err != nil {
+			if closeError := f.Close(); closeError != nil {
+				return nil, closeError
+			}
+			return nil, err
+		}
+
+		if err := indexFile.Close(); err != nil {
+			return nil, err
+		}
+	}
+	return f, nil
+
+}
+
 func home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		log.Println("Request path:", r.URL.Path)
