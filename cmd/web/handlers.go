@@ -90,3 +90,9 @@ func snippetCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte("Create a new snippet..."))
 }
+
+type handlerImpl struct{}
+
+func (h *handlerImpl) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("This is my handlerImpl"))
+}
