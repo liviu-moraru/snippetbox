@@ -2,22 +2,18 @@ package main
 
 import (
 	"flag"
+	appConfig "github.com/liviu-moraru/snippetbox/config"
 	"log"
 	"net/http"
 	"os"
 )
 
-type config struct {
-	addr      string
-	staticDir string
-}
-
-var cfg config
+var app appConfig.Application
 
 func main() {
 
-	flag.StringVar(&cfg.addr, "addr", ":4000", "HTTP network address")
-	flag.StringVar(&cfg.staticDir, "static-dir", "./ui/static", "Path to static assets")
+	flag.StringVar(&app.Addr, "addr", ":4000", "HTTP network address")
+	flag.StringVar(&app.StaticDir, "static-dir", "./ui/static", "Path to static assets")
 
 	//addr := flag.String("addr", ":4000", "HTTP network address")
 	flag.Parse()
@@ -32,6 +28,9 @@ func main() {
 	// the destination and use the log.Lshortfile flag to include the relevant
 	// file name and line number.
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.LUTC|log.Llongfile)
+	app.ErrorLog = errorLog
+	app.InfoLog = infoLog
+
 	// Use the http.NewServeMux() function to initialize a new servemux, then
 	// register the home function as the handler for the "/" URL pattern.
 	mux := http.NewServeMux()
@@ -39,14 +38,14 @@ func main() {
 	// Create a file server which serves files out of the "./ui/static" directory.
 	// Note that the path given to the http.Dir function is relative to the project
 	// directory root.
-	fileServer := http.FileServer(neuteredFileSystem{http.Dir(cfg.staticDir)})
+	fileServer := http.FileServer(neuteredFileSystem{http.Dir(app.StaticDir)})
 
 	// Use the mux.Handle() function to register the file server as the handler for
 	// all URL paths that start with "/static/". For matching paths, we strip the
 	// "/static" prefix before the request reaches the file server.
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
-	mux.HandleFunc("/", home)
+	mux.Handle("/", HomeHandler(&app))
 	mux.HandleFunc("/snippet/view", snippetView)
 	mux.HandleFunc("/snippet/create", snippetCreate)
 	mux.Handle("/handler/", &handlerImpl{})
@@ -56,12 +55,12 @@ func main() {
 	// the ErrorLog field so that the server now uses the custom errorLog logger in
 	// the event of any problems.
 	srv := &http.Server{
-		Addr:     cfg.addr,
-		ErrorLog: errorLog,
+		Addr:     app.Addr,
+		ErrorLog: app.ErrorLog,
 		Handler:  mux,
 	}
 
-	infoLog.Printf("Starting server on %s\n", cfg.addr)
+	infoLog.Printf("Starting server on %s\n", app.Addr)
 	// Call the ListenAndServe() method on our new http.Server struct.
 	err := srv.ListenAndServe()
 	errorLog.Fatal(err)

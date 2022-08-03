@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"github.com/liviu-moraru/snippetbox/config"
 	"html/template"
-	"log"
 	"net/http"
 	"path"
 	"strconv"
@@ -40,32 +40,34 @@ func (nfs neuteredFileSystem) Open(name string) (file http.File, err error) {
 
 }
 
-func home(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		log.Println("Request path:", r.URL.Path)
-		http.NotFound(w, r)
-		return
-	}
+func HomeHandler(app *config.Application) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			app.ErrorLog.Println("Request path:", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
 
-	files := []string{
-		"ui/html/partials/nav.tmpl",
-		"ui/html/base.tmpl",
-		"ui/html/pages/home.tmpl",
-	}
+		files := []string{
+			"ui/html/partials/nav.tmpl",
+			"ui/html/base.tmpl",
+			"ui/html/pages/home.tmpl",
+		}
 
-	ts, err := template.ParseFiles(files...)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Server Error", 500)
-		return
-	}
+		ts, err := template.ParseFiles(files...)
+		if err != nil {
+			app.ErrorLog.Println(err.Error())
+			http.Error(w, "Internal Server Error", 500)
+			return
+		}
 
-	err = ts.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Server Error", 500)
-	}
+		err = ts.ExecuteTemplate(w, "base", nil)
+		if err != nil {
+			app.ErrorLog.Println(err.Error())
+			http.Error(w, "Internal Server Error", 500)
+		}
 
+	})
 }
 
 func snippetView(w http.ResponseWriter, r *http.Request) {
