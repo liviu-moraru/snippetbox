@@ -43,8 +43,7 @@ func (nfs neuteredFileSystem) Open(name string) (file http.File, err error) {
 func HomeHandler(app *config.Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
-			app.ErrorLog.Println("Request path:", r.URL.Path)
-			http.NotFound(w, r)
+			notFound(w)
 			return
 		}
 
@@ -56,15 +55,13 @@ func HomeHandler(app *config.Application) http.Handler {
 
 		ts, err := template.ParseFiles(files...)
 		if err != nil {
-			app.ErrorLog.Println(err.Error())
-			http.Error(w, "Internal Server Error", 500)
+			serverError(app, w, err)
 			return
 		}
 
 		err = ts.ExecuteTemplate(w, "base", nil)
 		if err != nil {
-			app.ErrorLog.Println(err.Error())
-			http.Error(w, "Internal Server Error", 500)
+			serverError(app, w, err)
 		}
 
 	})
@@ -74,7 +71,7 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
 	//testHeaderMap(w)
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
-		http.NotFound(w, r)
+		notFound(w)
 		return
 	}
 	// Use the fmt.Fprintf() function to interpolate the id value with our response
@@ -86,7 +83,7 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
 func snippetCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.Header().Set("Allow", http.MethodPost)
-		http.Error(w, "Method now allowed", http.StatusMethodNotAllowed)
+		clientError(w, http.StatusMethodNotAllowed)
 		/*w.WriteHeader(405)
 		w.Write([]byte("Method not allowed"))*/
 	}
