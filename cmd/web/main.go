@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
+	_ "github.com/go-sql-driver/mysql" // New import
 	appConfig "github.com/liviu-moraru/snippetbox/config"
 	"log"
 	"net/http"
@@ -14,7 +16,8 @@ func main() {
 
 	flag.StringVar(&app.Addr, "addr", ":4000", "HTTP network address")
 	flag.StringVar(&app.StaticDir, "static-dir", "./ui/static", "Path to static assets")
-
+	// Define a new command-line flag for the MySQL DSN string.
+	flag.StringVar(&app.DSN, "dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
 	//addr := flag.String("addr", ":4000", "HTTP network address")
 	flag.Parse()
 
@@ -31,6 +34,20 @@ func main() {
 	app.ErrorLog = errorLog
 	app.InfoLog = infoLog
 
+	// To keep the main() function tidy I've put the code for creating a connection
+	// pool into the separate openDB() function below. We pass openDB() the DSN
+	// from the command-line flag.
+	db, err := openDB(app.DSN)
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
+	// We also defer a call to db.Close(), so that the connection pool is closed
+	// before the main() function exits.
+
+	defer db.Close()
+	app.DB = db
+
 	// Initialize a new http.Server struct. We set the Addr and Handler fields so
 	// that the server uses the same network address and routes as before, and set
 	// the ErrorLog field so that the server now uses the custom errorLog logger in
@@ -43,7 +60,18 @@ func main() {
 
 	infoLog.Printf("Starting server on %s\n", app.Addr)
 	// Call the ListenAndServe() method on our new http.Server struct.
-	err := srv.ListenAndServe()
+	err = srv.ListenAndServe()
 	errorLog.Fatal(err)
 
+}
+
+func openDB(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		return nil, err
+	}
+	if err = db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
 }
