@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/liviu-moraru/snippetbox/config"
 	"html/template"
 	"net/http"
 	"path"
@@ -40,7 +39,7 @@ func (nfs neuteredFileSystem) Open(name string) (file http.File, err error) {
 
 }
 
-func HomeHandler(app *config.Application) http.Handler {
+func HomeHandler(app *Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			notFound(w)

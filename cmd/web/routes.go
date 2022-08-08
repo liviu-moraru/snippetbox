@@ -1,11 +1,10 @@
 package main
 
 import (
-	appConfig "github.com/liviu-moraru/snippetbox/config"
 	"net/http"
 )
 
-func routes(app *appConfig.Application) *http.ServeMux {
+func routes(app *Application) *http.ServeMux {
 	// Use the http.NewServeMux() function to initialize a new servemux, then
 	// register the home function as the handler for the "/" URL pattern.
 	mux := http.NewServeMux()

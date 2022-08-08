@@ -1,15 +1,13 @@
-package config
+package main
 
 import (
-	"database/sql"
+	"github.com/liviu-moraru/snippetbox/internal/models"
 	"log"
 )
 
 type Application struct {
 	InfoLog   *log.Logger
 	ErrorLog  *log.Logger
-	Addr      string
+	Snippets  *models.SnippetModel
 	StaticDir string
-	DSN       string
-	DB        *sql.DB
 }
