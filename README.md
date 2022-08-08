@@ -23,3 +23,19 @@ go get github.com/foo/bar@none
 # go mod tidy doesn't remove the modules from $GOPATH/bin/mod
 go mod tidy -v # -v flag causes tidy to print information about removed modules to standard error.
 ```
+
+# 4.6 Executing SQL statements
+
+To test create request:
+
+```shell
+curl -iL -X POST http://localhost:4000/snippet/create
+
+# Test inside container
+# With container mysql running 
+docker run -e MYSQL_ROOT_PASSWORD=my-passw --name mysql -p 3306:3306 -v mysql:/var/lib/mysql mysql
+docker exec -it mysql mysql -uroot -p
+# Insert password for root (my-passw)
+# Inside mysql client REPL
+use snippetbox; select * from snippets;
+```

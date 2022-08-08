@@ -79,14 +79,30 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
 }
 
 // Add a snippetCreate handler function.
-func snippetCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		w.Header().Set("Allow", http.MethodPost)
-		clientError(w, http.StatusMethodNotAllowed)
-		/*w.WriteHeader(405)
-		w.Write([]byte("Method not allowed"))*/
-	}
-	w.Write([]byte("Create a new snippet..."))
+func SnippetCreateHandler(app *Application) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			w.Header().Set("Allow", http.MethodPost)
+			clientError(w, http.StatusMethodNotAllowed)
+			/*w.WriteHeader(405)
+			w.Write([]byte("Method not allowed"))*/
+			return
+		}
+		// Create some variables holding dummy data. We'll remove these later on
+		// during the build.
+		title := "O snail"
+		content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+		expires := 7
+		// Pass the data to the SnippetModel.Insert() method, receiving the
+		// ID of the new record back.
+		id, err := app.Snippets.Insert(title, content, expires)
+		if err != nil {
+			serverError(app, w, err)
+		}
+
+		// Redirect the user to the relevant page for the snippet.
+		http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
+	})
 }
 
 type handlerImpl struct{}
