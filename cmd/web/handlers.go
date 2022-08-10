@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/liviu-moraru/snippetbox/internal/models"
-	"html/template"
 	"net/http"
 	"path"
 	"strconv"
@@ -48,7 +47,17 @@ func HomeHandler(app *Application) http.Handler {
 			return
 		}
 
-		files := []string{
+		snippets, err := app.Snippets.Latest()
+		if err != nil {
+			serverError(app, w, err)
+			return
+		}
+
+		for _, snippet := range snippets {
+			fmt.Fprintf(w, "%+v\n", *snippet)
+		}
+
+		/*files := []string{
 			"ui/html/partials/nav.tmpl",
 			"ui/html/base.tmpl",
 			"ui/html/pages/home.tmpl",
@@ -63,7 +72,7 @@ func HomeHandler(app *Application) http.Handler {
 		err = ts.ExecuteTemplate(w, "base", nil)
 		if err != nil {
 			serverError(app, w, err)
-		}
+		}*/
 
 	})
 }
