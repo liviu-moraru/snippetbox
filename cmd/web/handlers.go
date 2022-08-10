@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"github.com/liviu-moraru/snippetbox/internal/models"
 	"html/template"
 	"net/http"
 	"path"
@@ -66,19 +68,30 @@ func HomeHandler(app *Application) http.Handler {
 	})
 }
 
-func snippetView(w http.ResponseWriter, r *http.Request) {
-	//testHeaderMap(w)
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
-	if err != nil || id < 1 {
-		notFound(w)
-		return
-	}
-	// Use the fmt.Fprintf() function to interpolate the id value with our response
-	// and write it to the http.ResponseWriter.
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+func SnippetViewHandler(app *Application) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//testHeaderMap(w)
+		id, err := strconv.Atoi(r.URL.Query().Get("id"))
+		if err != nil || id < 1 {
+			notFound(w)
+			return
+		}
+		snippet, err := app.Snippets.Get(id)
+		if err != nil {
+			if errors.Is(err, models.ErrNoRecord) {
+				notFound(w)
+			} else {
+				serverError(app, w, err)
+			}
+			return
+		}
+
+		// Write the snippet data as a plain-text HTTP response body.
+		fmt.Fprintf(w, "%+v", *snippet)
+	})
 }
 
-// Add a snippetCreate handler function.
+// SnippetCreateHandler Add a snippetCreate handler function.
 func SnippetCreateHandler(app *Application) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {

@@ -34,8 +34,18 @@ curl -iL -X POST http://localhost:4000/snippet/create
 # Test inside container
 # With container mysql running 
 docker run -e MYSQL_ROOT_PASSWORD=my-passw --name mysql -p 3306:3306 -v mysql:/var/lib/mysql mysql
+( or docker start mysql)
+
 docker exec -it mysql mysql -uroot -p
 # Insert password for root (my-passw)
 # Inside mysql client REPL
 use snippetbox; select * from snippets;
 ```
+
+To test view request:
+
+```shell
+docker start mysql
+curl -iL "http://127.0.0.1:4000/snippet/view?id=1"
+```
+

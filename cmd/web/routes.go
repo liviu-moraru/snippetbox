@@ -20,7 +20,7 @@ func routes(app *Application) *http.ServeMux {
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	mux.Handle("/", HomeHandler(app))
-	mux.HandleFunc("/snippet/view", snippetView)
+	mux.Handle("/snippet/view", SnippetViewHandler(app))
 	mux.Handle("/snippet/create", SnippetCreateHandler(app))
 	mux.Handle("/handler/", &handlerImpl{})
 	return mux
