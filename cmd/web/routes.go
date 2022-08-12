@@ -23,5 +23,6 @@ func routes(app *Application) *http.ServeMux {
 	mux.Handle("/snippet/view", SnippetViewHandler(app))
 	mux.Handle("/snippet/create", SnippetCreateHandler(app))
 	mux.Handle("/handler/", &handlerImpl{})
+	mux.Handle("/snippet/trans", SnippetTransationHandler(app))
 	return mux
 }

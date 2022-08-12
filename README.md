@@ -49,3 +49,10 @@ docker start mysql
 curl -iL "http://127.0.0.1:4000/snippet/view?id=1"
 ```
 
+# 4.9 Transactions and other details. Transaction and DB tests.
+
+```shell
+go test -v ./internal/models
+# or
+go test -v ./...
+```

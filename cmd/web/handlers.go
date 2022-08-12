@@ -127,6 +127,25 @@ func SnippetCreateHandler(app *Application) http.Handler {
 	})
 }
 
+func SnippetTransationHandler(app *Application) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "POST" {
+			w.Header().Set("Allow", http.MethodPost)
+			clientError(w, http.StatusMethodNotAllowed)
+			return
+		}
+
+		id, err := app.Snippets.ExampleTransaction()
+		if err != nil {
+			serverError(app, w, err)
+		}
+
+		// Redirect the user to the relevant page for the snippet.
+		http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
+
+	})
+}
+
 type handlerImpl struct{}
 
 func (h *handlerImpl) ServeHTTP(w http.ResponseWriter, r *http.Request) {
