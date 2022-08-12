@@ -54,7 +54,7 @@ func HomeHandler(app *Application) http.Handler {
 		}
 
 		for _, snippet := range snippets {
-			fmt.Fprintf(w, "%+v\n", *snippet)
+			fmt.Fprintf(w, "%+v\n", snippet)
 		}
 
 		/*files := []string{
@@ -96,7 +96,7 @@ func SnippetViewHandler(app *Application) http.Handler {
 		}
 
 		// Write the snippet data as a plain-text HTTP response body.
-		fmt.Fprintf(w, "%+v", *snippet)
+		fmt.Fprintf(w, "%+v", snippet)
 	})
 }
 

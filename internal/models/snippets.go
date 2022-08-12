@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -11,7 +12,7 @@ import (
 // table?
 type Snippet struct {
 	ID      int
-	Title   string
+	Title   sql.NullString
 	Content string
 	Created time.Time
 	Expires time.Time
@@ -21,6 +22,22 @@ type Snippet struct {
 type SnippetModel struct {
 	DB *sql.DB
 }
+
+func (s *Snippet) String() string {
+	title := "-"
+	if s.Title.Valid {
+		title = s.Title.String
+	}
+	return fmt.Sprintf("Title: %s", title)
+}
+
+/*func (s *Snippet) Format(f fmt.State, verb rune) {
+	title := "-"
+	if s.Title.Valid {
+		title = s.Title.String
+	}
+	fmt.Fprintf(f, "Title: %s", title)
+}*/
 
 // Insert This will insert a new snippet into the database.
 func (m *SnippetModel) Insert(title string, content string, expires int) (int, error) {
