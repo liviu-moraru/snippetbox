@@ -1,0 +1,16 @@
+{{define "title"}}Snippet #{{.Snippet.ID}}{{end}}
+{{define "main"}}
+    {{with .Snippet}}
+    <div class="snippet">
+        <div class="metadata">
+            <strong>{{if .Title.Valid}}{{.Title.String}}{{else}}-{{end}}</strong>
+            <span>#{{.ID}}</span>
+        </div>
+        <pre><code>{{.Content}}</code></pre>
+        <div class="metadata">
+            <time>Created: {{.Created.Format "02 Jan 06 15:04 -0700"}}</time>
+            <time>Expires: {{.Expires}}</time>
+        </div>
+    </div>
+    {{end}}
+{{end}}
