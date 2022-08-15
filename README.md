@@ -112,3 +112,13 @@ Ex in templates:
 ```
  <time>Created: {{.Created.Format "02 Jan 06 15:04 -0700"}}</time>
 ```
+
+3. Jetbrains Goland: Associate *.tmpl files with Go templates
+
+Preferences -> Editor -> File Types
+
+Then for Go template, add *.tmpl in the list of associated file types.
+
+# 5.2 Template actions and functions
+
+List of template functions: [Template functions](https://pkg.go.dev/text/template#hdr-Functions)

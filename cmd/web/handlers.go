@@ -54,11 +54,7 @@ func HomeHandler(app *Application) http.Handler {
 			return
 		}
 
-		for _, snippet := range snippets {
-			fmt.Fprintf(w, "%+v\n", snippet)
-		}
-
-		/*files := []string{
+		files := []string{
 			"ui/html/partials/nav.tmpl",
 			"ui/html/base.tmpl",
 			"ui/html/pages/home.tmpl",
@@ -70,10 +66,15 @@ func HomeHandler(app *Application) http.Handler {
 			return
 		}
 
-		err = ts.ExecuteTemplate(w, "base", nil)
+		// Create an instance of a templateData struct holding the snippet data.
+		data := &templateData{
+			Snippets: snippets,
+		}
+
+		err = ts.ExecuteTemplate(w, "base", data)
 		if err != nil {
 			serverError(app, w, err)
-		}*/
+		}
 
 	})
 }
