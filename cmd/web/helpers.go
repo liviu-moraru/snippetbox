@@ -27,3 +27,27 @@ func clientError(w http.ResponseWriter, status int) {
 func notFound(w http.ResponseWriter) {
 	clientError(w, http.StatusNotFound)
 }
+
+func render(app *Application, w http.ResponseWriter, status int, page string, data *templateData) {
+	// Retrieve the appropriate template set from the cache based on the page
+	// name (like 'home.tmpl'). If no entry exists in the cache with the
+	// provided name, then create a new error and call the serverError() helper
+	// method that we made earlier and return.
+	ts, ok := app.TemplateCache[page]
+
+	if !ok {
+		serverError(app, w, fmt.Errorf("the template %s does not exist", page))
+		return
+	}
+
+	// Write out the provided HTTP status code ('200 OK', '400 Bad Request'
+	// etc).
+	w.WriteHeader(status)
+
+	// Execute the template set and write the response body. Again, if there
+	// is any error we call the serverError() helper.
+	err := ts.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		serverError(app, w, err)
+	}
+}

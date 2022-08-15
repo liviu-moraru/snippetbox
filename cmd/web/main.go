@@ -45,11 +45,18 @@ func main() {
 	// before the main() function exits.
 
 	defer db.Close()
+
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		errorLog.Fatal(err)
+	}
+
 	app := &Application{
-		InfoLog:   infoLog,
-		ErrorLog:  errorLog,
-		Snippets:  &models.SnippetModel{DB: db},
-		StaticDir: cfg.StaticDir,
+		InfoLog:       infoLog,
+		ErrorLog:      errorLog,
+		Snippets:      &models.SnippetModel{DB: db},
+		StaticDir:     cfg.StaticDir,
+		TemplateCache: templateCache,
 	}
 
 	// Initialize a new http.Server struct. We set the Addr and Handler fields so

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/liviu-moraru/snippetbox/internal/models"
-	"html/template"
 	"net/http"
 	"path"
 	"strconv"
@@ -54,27 +53,10 @@ func HomeHandler(app *Application) http.Handler {
 			return
 		}
 
-		files := []string{
-			"ui/html/partials/nav.tmpl",
-			"ui/html/base.tmpl",
-			"ui/html/pages/home.tmpl",
-		}
-
-		ts, err := template.ParseFiles(files...)
-		if err != nil {
-			serverError(app, w, err)
-			return
-		}
-
-		// Create an instance of a templateData struct holding the snippet data.
-		data := &templateData{
+		// Use the new render helper.
+		render(app, w, http.StatusOK, "home.tmpl", &templateData{
 			Snippets: snippets,
-		}
-
-		err = ts.ExecuteTemplate(w, "base", data)
-		if err != nil {
-			serverError(app, w, err)
-		}
+		})
 
 	})
 }
@@ -97,35 +79,10 @@ func SnippetViewHandler(app *Application) http.Handler {
 			return
 		}
 
-		// Initialize a slice containing the paths to the view.tmpl file,
-		// plus the base layout and navigation partial that we made earlier.
-		files := []string{
-			"ui/html/base.tmpl",
-			"ui/html/partials/nav.tmpl",
-			"ui/html/pages/view.tmpl",
-		}
-
-		ts, err := template.ParseFiles(files...)
-
-		// Parse the template files...
-		if err != nil {
-			serverError(app, w, err)
-			return
-		}
-
-		/*tz, _ := time.LoadLocation("US/Pacific")
-		snippet.Created = snippet.Created.In(tz)*/
-
-		// Create an instance of a templateData struct holding the snippet data.
-		data := &templateData{
+		render(app, w, http.StatusOK, "view.tmpl", &templateData{
 			Snippet: snippet,
-		}
-		// And then execute them. Notice how we are passing in the snippet
-		// data (a models.Snippet struct) as the final parameter?
-		err = ts.ExecuteTemplate(w, "base", data)
-		if err != nil {
-			serverError(app, w, err)
-		}
+		})
+
 	})
 }
 
