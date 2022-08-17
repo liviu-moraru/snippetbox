@@ -6,6 +6,7 @@
             <strong>{{if .Title.Valid}}{{.Title.String}}{{else}}No title{{end}}</strong>
             <span>#{{.ID}}</span>
         </div>
+        {{len nil}} <!-- Deliberate error -->
         <pre><code>{{.Content}}</code></pre>
         <div class="metadata">
             <time>Created: {{.Created.Format "02 Jan 06 15:04 -0700"}}</time>
