@@ -53,10 +53,14 @@ func HomeHandler(app *Application) http.Handler {
 			return
 		}
 
-		// Use the new render helper.
-		render(app, w, http.StatusOK, "home.tmpl", &templateData{
-			Snippets: snippets,
-		})
+		// Call the newTemplateData() helper to get a templateData struct containing
+		// the 'default' data (which for now is just the current year), and add the
+		// snippets slice to it.
+		data := newTemplateData(app)
+		data.Snippets = snippets
+
+		// Pass the data to the render() helper as normal.
+		render(app, w, http.StatusOK, "home.tmpl", data)
 
 	})
 }
@@ -79,9 +83,13 @@ func SnippetViewHandler(app *Application) http.Handler {
 			return
 		}
 
-		render(app, w, http.StatusOK, "view.tmpl", &templateData{
-			Snippet: snippet,
-		})
+		// Call the newTemplateData() helper to get a templateData struct containing
+		// the 'default' data (which for now is just the current year), and add the
+		// snippets slice to it.
+		data := newTemplateData(app)
+		data.Snippet = snippet
+
+		render(app, w, http.StatusOK, "view.tmpl", data)
 
 	})
 }
