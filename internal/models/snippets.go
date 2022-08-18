@@ -23,22 +23,6 @@ type SnippetModel struct {
 	DB *sql.DB
 }
 
-/*func (s *Snippet) String() string {
-	title := "-"
-	if s.Title.Valid {
-		title = s.Title.String
-	}
-	return fmt.Sprintf("Title: %s", title)
-}*/
-
-/*func (s *Snippet) Format(f fmt.State, verb rune) {
-	title := "-"
-	if s.Title.Valid {
-		title = s.Title.String
-	}
-	fmt.Fprintf(f, "Title: %s", title)
-}*/
-
 // Insert This will insert a new snippet into the database.
 func (m *SnippetModel) Insert(title string, content string, expires int) (int, error) {
 	// Write the SQL statement we want to execute. I've split it over two lines
@@ -124,5 +108,4 @@ func (m *SnippetModel) Latest() ([]*Snippet, error) {
 	}
 
 	return snippets, nil
-
 }
