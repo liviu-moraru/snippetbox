@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func (app *Application) routes() *http.ServeMux {
+func (app *Application) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	fileServer := http.FileServer(neuteredFileSystem{http.Dir(app.StaticDir)})
@@ -15,5 +15,5 @@ func (app *Application) routes() *http.ServeMux {
 	mux.Handle("/snippet/create", app.SnippetCreateHandler())
 	mux.Handle("/handler/", &handlerImpl{})
 	mux.Handle("/snippet/trans", app.SnippetTransationHandler())
-	return mux
+	return secureHeader(mux)
 }
