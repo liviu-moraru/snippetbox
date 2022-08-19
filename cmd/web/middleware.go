@@ -1,6 +1,9 @@
 package main
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 func secureHeader(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -14,5 +17,28 @@ func secureHeader(next http.Handler) http.Handler {
 		w.Header().Set("X-XSS-Protection", "0")
 
 		next.ServeHTTP(w, r)
+	})
+}
+
+type StatusRecorder struct {
+	http.ResponseWriter
+	Status int
+}
+
+func (sr *StatusRecorder) WriteHeader(status int) {
+	sr.Status = status
+	sr.ResponseWriter.WriteHeader(status)
+}
+
+func (app *Application) logRequest(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sr := &StatusRecorder{
+			ResponseWriter: w,
+			Status:         200,
+		}
+
+		rd := fmt.Sprintf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
+		next.ServeHTTP(sr, r)
+		app.InfoLog.Printf("%s Response status: %d", rd, sr.Status)
 	})
 }

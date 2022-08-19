@@ -74,7 +74,7 @@ or
 
 Create an other Time for a time zone
 
-```go
+```
 t := time.Now()
 tz, _ := time.LoadLocation("America/Toronto")
 t = t.In(tz)
@@ -122,3 +122,64 @@ Then for Go template, add *.tmpl in the list of associated file types.
 # 5.2 Template actions and functions
 
 List of template functions: [Template functions](https://pkg.go.dev/text/template#hdr-Functions)
+
+# 6.3 Request logging
+
+- How to log response code
+
+See: [Logging the status code of a HTTP Handler in Go](https://dev.to/julienp/logging-the-status-code-of-a-http-handler-in-go-25aa)
+
+```
+// cmd/web/middleware.go
+
+...
+type StatusRecorder struct {
+    http.ResponseWriter
+    Status int
+}
+
+//Override the WriteHeader method of the embedded ResponseWriter
+func (sr *StatusRecorder) WriteHeader(status int) {
+    sr.Status = status
+    
+    // Without this, the Status Code of the response would not be set.
+    sr.ResponseWriter.WriteHeader(status)
+}
+
+func (app *Application) logRequest(next http.Handler) http.Handler {
+return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+sr := &StatusRecorder{
+ResponseWriter: w,
+Status:         200,
+}
+
+rd := fmt.Sprintf("%s - %s %s %s", r.RemoteAddr, r.Proto, r.Method, r.URL.RequestURI())
+next.ServeHTTP(sr, r) // the sr.Status will be set by the WriteHeader method
+app.InfoLog.Printf("%s Response status: %d", rd, sr.Status)
+})
+}
+```
+
+```
+// cmd/web/routes..go
+
+func (app *Application) routes() http.Handler {
+    mux := http.NewServeMux()
+	....
+    return app.logRequest(secureHeader(mux))	
+}
+```
+
+```
+// cnd/web/main.go
+...
+srv := &http.Server{
+    Addr:     cfg.Addr,
+    ErrorLog: app.ErrorLog,
+    Handler:  app.routes(),
+}
+
+err = srv.ListenAndServe()
+errorLog.Fatal(err)
+
+```
