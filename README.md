@@ -204,3 +204,11 @@ func (app *Application) SnippetViewHandler() http.Handler {
 go panicTest()
 }
 ```
+
+# 6.5 Composable middleware chains
+
+Install alice package:
+
+```
+go get github.com/justinas/alice@v1
+```

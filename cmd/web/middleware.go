@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func secureHeader(next http.Handler) http.Handler {
+func secureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Note: This is split across multiple lines for readability. You don't
 		// need to do this in your own code.
