@@ -47,6 +47,7 @@ func (app *Application) HomeHandler() http.Handler {
 			return
 		}
 
+		panic("ooops! sonething went wrong") // Deliberate panic
 		snippets, err := app.Snippets.Latest()
 		if err != nil {
 			app.serverError(w, err)

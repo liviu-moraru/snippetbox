@@ -86,6 +86,7 @@ Ex. of time zone: See the file `$GOROOT/lib/time/zoneinfo.zip`
 See [Format](https://pkg.go.dev/time#Time.Format)
 
 In `format.go` (package time), see the constants:
+
 ```
 const (
 Layout      = "01/02 03:04:05PM '06 -0700" // The reference time, in numerical order.
@@ -109,6 +110,7 @@ StampNano  = "Jan _2 15:04:05.000000000"
 ```
 
 Ex in templates:
+
 ```
  <time>Created: {{.Created.Format "02 Jan 06 15:04 -0700"}}</time>
 ```
@@ -141,7 +143,7 @@ type StatusRecorder struct {
 //Override the WriteHeader method of the embedded ResponseWriter
 func (sr *StatusRecorder) WriteHeader(status int) {
     sr.Status = status
-    
+  
     // Without this, the Status Code of the response would not be set.
     sr.ResponseWriter.WriteHeader(status)
 }
@@ -166,7 +168,7 @@ app.InfoLog.Printf("%s Response status: %d", rd, sr.Status)
 func (app *Application) routes() http.Handler {
     mux := http.NewServeMux()
 	....
-    return app.logRequest(secureHeader(mux))	
+    return app.logRequest(secureHeader(mux))
 }
 ```
 
@@ -182,4 +184,23 @@ srv := &http.Server{
 err = srv.ListenAndServe()
 errorLog.Fatal(err)
 
+```
+
+# 6.4 Panic recovery
+
+1. Setting the **Connection: Close** header on the response acts as a trigger to make Go’ HTTP server automatically close the current connection after a response has been sent.I talso informs the user that the connection will be closed. Note: If the protocol being used is HTTP/2, Go will automatically strip the **Connection: Close** header from the response (so it is not malformed) and send a GOAWAY frame.
+2. Go’s HTTP server assumes that the effect of any panic is isolated to the goroutine serving the active HTTP request. Specifically, following a panic our server will log a stack trace to the server error log, unwind
+   the stack for the affected goroutine (calling any deferred functions along the way) and close
+   the underlying HTTP connection.
+3. A panic in a function called as a goroutine by a handler, will end the application (web server will crash)
+
+```
+func panicTest() {
+	panic("Panic")
+}
+
+func (app *Application) SnippetViewHandler() http.Handler { 
+...
+go panicTest()
+}
 ```

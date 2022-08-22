@@ -42,3 +42,32 @@ func (app *Application) logRequest(next http.Handler) http.Handler {
 		app.InfoLog.Printf("%s Response status: %d", rd, sr.Status)
 	})
 }
+
+func (app *Application) recoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Create a deferred function (which will always be run in the event
+		// of a panic as Go unwinds the stack).
+		defer func() {
+			// Use the builtin recover function to check if there has been a
+			// panic or not. If there has...
+			if err := recover(); err != nil {
+				// Set a "Connection: close" header on the response.
+				//	Setting the
+				//	header on the response acts as a trigger to make Go’s
+				//Connection: Close
+				//	HTTP server automatically close the current connection after a response has been sent. It
+				//	also informs the user that the connection will be closed. Note: If the protocol being used is
+				//	HTTP/2, Go will automatically strip the
+				//	header from the response (so it
+				//Connection: Close
+				//	is not malformed) and send a
+				//	GOAWAY frame.
+				w.Header().Set("Connection", "close")
+				// Call the app.serverError helper method to return a 500
+				// Internal Server response.
+				app.serverError(w, fmt.Errorf("%s", err))
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}

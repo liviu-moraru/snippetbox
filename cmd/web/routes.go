@@ -17,5 +17,5 @@ func (app *Application) routes() http.Handler {
 	mux.Handle("/snippet/trans", app.SnippetTransationHandler())
 
 	// Wrap the existing chain with the logRequest middleware.
-	return app.logRequest(secureHeader(mux))
+	return app.recoverPanic(app.logRequest(secureHeader(mux)))
 }
