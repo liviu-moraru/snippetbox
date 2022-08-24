@@ -3,8 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/julienschmidt/httprouter"
 	"github.com/liviu-moraru/snippetbox/internal/models"
 	"net/http"
+	"os"
 	"path"
 	"strconv"
 )
@@ -42,10 +44,8 @@ func (nfs neuteredFileSystem) Open(name string) (file http.File, err error) {
 
 func (app *Application) HomeHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			app.notFound(w)
-			return
-		}
+		// Because httprouter matches the "/" path exactly, we can now remove the
+		// manual check of r.URL.Path != "/" from this handler.
 
 		snippets, err := app.Snippets.Latest()
 		if err != nil {
@@ -62,12 +62,22 @@ func (app *Application) HomeHandler() http.Handler {
 
 func (app *Application) SnippetViewHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//testHeaderMap(w)
-		id, err := strconv.Atoi(r.URL.Query().Get("id"))
+		// When httprouter is parsing a request, the values of any named parameters
+		// will be stored in the request context. We'll talk about request context
+		// in detail later in the book, but for now it's enough to know that you can
+		// use the ParamsFromContext() function to retrieve a slice containing these
+		// parameter names and values like so:
+		params := httprouter.ParamsFromContext(r.Context())
+
+		// We can then use the ByName() method to get the value of the "id" named
+		// parameter from the slice and validate it as normal.
+		id, err := strconv.Atoi(params.ByName("id"))
+
 		if err != nil || id < 1 {
 			app.notFound(w)
 			return
 		}
+
 		snippet, err := app.Snippets.Get(id)
 		if err != nil {
 			if errors.Is(err, models.ErrNoRecord) {
@@ -85,15 +95,16 @@ func (app *Application) SnippetViewHandler() http.Handler {
 	})
 }
 
-func (app *Application) SnippetCreateHandler() http.Handler {
+// Add a new snippetCreate handler, which for now returns a placeholder
+// response. We'll update this shortly to show a HTML form.
+func (app *Application) snippetCreate(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Display the form for creating a new snippet..."))
+}
+
+func (app *Application) SnippetCreatePostHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			w.Header().Set("Allow", http.MethodPost)
-			app.clientError(w, http.StatusMethodNotAllowed)
-			/*w.WriteHeader(405)
-			w.Write([]byte("Method not allowed"))*/
-			return
-		}
+		// Checking if the request method is a POST is now superfluous and can be
+		// removed, because this is done automatically by httprouter.
 
 		title := "O snail"
 		content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
@@ -108,25 +119,16 @@ func (app *Application) SnippetCreateHandler() http.Handler {
 	})
 }
 
-func (app *Application) SnippetTransationHandler() http.Handler {
+func (app *Application) NoDirListingHandler(d http.Dir) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != "POST" {
-			w.Header().Set("Allow", http.MethodPost)
-			app.clientError(w, http.StatusMethodNotAllowed)
+		params := httprouter.ParamsFromContext(r.Context())
+		fp := params.ByName("filepath")
+		fp = path.Join(string(d), fp)
+		if fi, err := os.Stat(fp); err == nil && !fi.IsDir() {
+			fileServer := http.FileServer(d)
+			http.StripPrefix("/static", fileServer).ServeHTTP(w, r)
 			return
 		}
-
-		id, err := app.Snippets.ExampleTransaction()
-		if err != nil {
-			app.serverError(w, err)
-		}
-
-		http.Redirect(w, r, fmt.Sprintf("/snippet/view?id=%d", id), http.StatusSeeOther)
+		app.notFound(w)
 	})
-}
-
-type handlerImpl struct{}
-
-func (h *handlerImpl) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("This is my handlerImpl"))
 }

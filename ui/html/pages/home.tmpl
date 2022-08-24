@@ -11,7 +11,8 @@
                 {{range .Snippets}}
                     <tr>
                         <td>
-                            <a href="/snippet/view?id={{.ID}}">{{.Title.Value}}</a>
+                            <!-- Use the new clean URL style-->
+                            <a href="/snippet/view/{{.ID}}">{{.Title.Value}}</a>
                         </td>
                         <!-- Use the new template function here -->
                         <td>{{humanDate .Created}}</td>
