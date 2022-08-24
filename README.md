@@ -301,3 +301,7 @@ router.PanicHandler = func(w http.ResponseWriter, r *http.Request, i interface{}
 		app.serverError(w, fmt.Errorf("%s", i))
 }
 ```
+# 8.1 Setting up a HTML form
+
+- I modified code in order to not use template caching when DEVELOP environment variable is set with the value true.
+It's better for development. The application must not be started if a change is made in a template file.

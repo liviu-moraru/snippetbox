@@ -3,8 +3,12 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 	"runtime/debug"
+	"strings"
 	"time"
 )
 
@@ -31,22 +35,33 @@ func (app *Application) notFound(w http.ResponseWriter) {
 }
 
 func (app *Application) render(w http.ResponseWriter, status int, page string, data *templateData) {
-	// Retrieve the appropriate template set from the cache based on the page
-	// name (like 'home.tmpl'). If no entry exists in the cache with the
-	// provided name, then create a new error and call the serverError() helper
-	// method that we made earlier and return.
-	ts, ok := app.TemplateCache[page]
+	var ts *template.Template
+	var ok bool
+	var err error
 
-	if !ok {
-		app.serverError(w, fmt.Errorf("the template %s does not exist", page))
-		return
+	develop := os.Getenv("DEVELOP")
+
+	if strings.ToLower(develop) == "true" {
+		fp := filepath.Join("./ui/html/pages", page)
+		ts, err = parsePage(fp)
+		if err != nil {
+			app.serverError(w, fmt.Errorf("the template %s does not exist", page))
+			return
+		}
+	} else {
+		ts, ok = app.TemplateCache[page]
+
+		if !ok {
+			app.serverError(w, fmt.Errorf("the template %s does not exist", page))
+			return
+		}
 	}
 
 	buf := new(bytes.Buffer)
 
 	// Execute the template set and write the response body. Again, if there
 	// is any error we call the serverError() helper.
-	err := ts.ExecuteTemplate(buf, "base", data)
+	err = ts.ExecuteTemplate(buf, "base", data)
 	if err != nil {
 		app.serverError(w, err)
 		return
