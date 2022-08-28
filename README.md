@@ -227,6 +227,7 @@ go get github.com/julienschmidt/httprouter
 params := httprouter.ParamsFromContext(r.Context())
 id, err := strconv.Atoi(params.ByName("id"))
 ```
+
 - I changed the way to implement the no directory listing
 
 ```
@@ -269,7 +270,7 @@ handlers.go
 
 func (app *Application) SnippetViewHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))	
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 
 }
 
@@ -291,6 +292,7 @@ standard := alice.New(app.logRequest, secureHeaders)
 	// Wrap the router with the middleware and return it as normal.
 return standard.Then(router)
 ```
+
 and instead set PanicHandler:
 
 ```
@@ -301,7 +303,99 @@ router.PanicHandler = func(w http.ResponseWriter, r *http.Request, i interface{}
 		app.serverError(w, fmt.Errorf("%s", i))
 }
 ```
+
 # 8.1 Setting up a HTML form
 
 - I modified code in order to not use template caching when DEVELOP environment variable is set with the value true.
-It's better for development. The application must not be started if a change is made in a template file.
+  It's better for development. The application must not be started if a change is made in a template file.
+
+# 8.2 Parsing form data
+
+- First we call http.Request.ParseForm() which adds any data in POST request bodies to the r.PostForm map. This also works in the same way for PUT and PATCH requests.
+
+```
+func (app *Application) SnippetCreatePostHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+```
+
+- In our code above, we accessed the form values via the map. But an alternative r.PostForm approach is to use the (subtly different) r.Form map
+- The r.PostForm map is populated only for POST, PATCH and PUT requests, and contains the
+  form data from the request body.
+- In contrast, the r.Form map is populated for all requests (irrespective of their HTTP method),
+  and contains the form data from any request body and any query string parameters. So, if our
+  form was submitted to /snippet/create?foo=bar, we could also get the value of the foo
+  parameter by calling r.Form.Get("foo")
+- Strictly speaking, the r.PostForm.Get() method that we’ve used above only returns the first
+  value for a specific form field. This means you can’t use it with form fields which potentially
+  send multiple values, such as a group of checkboxes. Sample of using checkboxes:
+
+```
+create.tmpl
+
+ <!-- Checkboxes -->
+        <div>
+            <input type="checkbox" name="items" value="foo"> Foo
+            <input type="checkbox" name="items" value="bar"> Bar
+            <input type="checkbox" name="items" value="baz"> Baz
+        </div>
+  
+ handlers.go
+ 
+		for i, item := range r.PostForm["items"] {
+			app.InfoLog.Printf("%d: Item %s\n", i, item)
+		}
+```
+
+- Limiting form size:
+
+  - Unless you’re sending multipart data (i.e. your form has the enctype="multipart/form-data"
+    attribute) then POST, PUT and PATCH request bodies are limited to 10MB. If this is exceeded
+    then r.ParseForm() will return an error.
+  - If you want to change this limit you can use the http.MaxBytesReader() function like so:
+
+```
+// Limit the request body size to 4096 bytes
+r.Body = http.MaxBytesReader(w, r.Body, 4096)
+err := r.ParseForm()
+if err != nil {
+   http.Error(w, "Bad Request", http.StatusBadRequest)
+   return
+}
+```
+
+- With this code only the first 4096 bytes of the request body will be read during
+  r.ParseForm(). Trying to read beyond this limit will cause the MaxBytesReader to return an
+  error, which will subsequently be surfaced by r.ParseForm().
+  Additionally — if the limit is hit — MaxBytesReader sets a flag on http.ResponseWriter which
+  instructs the server to close the underlying TCP connection.
+- For Go versions <1.19, the error returned by r.ParseForm is of the errors.errorString type and can be checked only by the text: **http: request body too large**
+- In Go 1.19 the struct http.MaxBytesReader was introduces. So, to check this error:
+
+```
+handlers.go
+
+func (app *Application) SnippetCreatePostHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, 10)
+		var maxBytesError *http.MaxBytesError
+		err := r.ParseForm()
+		if err != nil {
+			if errors.As(err, &maxBytesError) {
+				app.maxBytesError(w, http.StatusBadRequest)
+				return
+			}
+			app.clientError(w, http.StatusBadRequest)
+			return
+		}
+
+helpers.go
+
+func (app *Application) maxBytesError(w http.ResponseWriter, status int) {
+	http.Error(w, "Max Bytes Error", status)
+}
+```

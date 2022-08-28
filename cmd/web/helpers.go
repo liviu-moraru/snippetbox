@@ -27,6 +27,10 @@ func (app *Application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
+func (app *Application) maxBytesError(w http.ResponseWriter, status int) {
+	http.Error(w, "Max Bytes Error", status)
+}
+
 // For consistency, we'll also implement a notFound helper. This is simply a
 // convenience wrapper around clientError which sends a 404 Not Found response to
 // the user.
