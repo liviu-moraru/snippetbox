@@ -27,6 +27,10 @@ func (app *Application) clientError(w http.ResponseWriter, status int) {
 	http.Error(w, http.StatusText(status), status)
 }
 
+func (app *Application) customClientError(w http.ResponseWriter, error string, status int) {
+	http.Error(w, error, status)
+}
+
 func (app *Application) maxBytesError(w http.ResponseWriter, status int) {
 	http.Error(w, "Max Bytes Error", status)
 }

@@ -399,3 +399,9 @@ func (app *Application) maxBytesError(w http.ResponseWriter, status int) {
 	http.Error(w, "Max Bytes Error", status)
 }
 ```
+
+# 8.3 Validating form data
+
+- When we check the length of the title field, we’re using the
+  utf8.RuneCountInString() function — not Go’s len() function
+- Patterns for processing and validating different types of inputs: [this blog post](https://www.alexedwards.net/blog/validation-snippets-for-go)
