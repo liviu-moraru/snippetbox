@@ -405,3 +405,24 @@ func (app *Application) maxBytesError(w http.ResponseWriter, status int) {
 - When we check the length of the title field, we’re using the
   utf8.RuneCountInString() function — not Go’s len() function
 - Patterns for processing and validating different types of inputs: [this blog post](https://www.alexedwards.net/blog/validation-snippets-for-go)
+
+# 8.4 Displaying errors and repopulating fields
+
+- For the validation errors, the underlying type of our FieldErrors field is a
+  map[string]string, which uses the form field names as keys. **For maps, it’s possible to
+  access the value for a given key by simply chaining the key name**. So, for example, to render a
+  validation error for the title field we can use the tag {{.Form.FieldErrors.title}} in our
+  template.
+- Note: Unlike struct fields, map key names don’t have to be capitalized in order to access
+  them from a template.
+- All the snippetCreateForm struct fields are deliberately exported (i.e. start with a capital letter). **This is because struct fields must be exported in order to be read by the html/template package when rendering the template**.
+- In handlers.go, line 146 we can pass the address of the form variable instead of a copy of the struct.
+
+  ```go
+if len(form.FieldErrors) > 0 {
+  data := app.newTemplateData()
+  data.Form = &form // Instead of data.Form = form
+  app.render(w, http.StatusUnprocessableEntity, "create.tmpl", data)
+return
+}
+  ```
