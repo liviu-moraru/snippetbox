@@ -431,3 +431,122 @@ return
 # 8.5 Creating validation helpers
 
 - Embedding structs in Go, see [good introduction](https://eli.thegreenplace.net/2020/embedding-in-go-part-1-structs-in-structs/)
+
+# 8.6 Automating form parsing
+
+- Install package go-playground/form (see other package gorilla/schema)
+
+```
+go get github.com/go-playground/form/v4@v4
+```
+- Add a pointer to Decoder as dependency
+
+```
+type Application struct {
+	....
+	FormDecoder   *form.Decoder
+}
+```
+- Update snippetCreateForm struct to include struct tags which tell the decoder how to map HTML form values into the different struct fields.
+
+```
+handlers.go
+
+type snippetCreateForm struct {
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires""`
+	validator.Validator `form:"-"`
+}
+```
+
+- Add a helper function to decode form
+```
+func (app *Application) decodePostForm(r *http.Request, dst any) error {
+    err := r.ParseForm()
+	if err != nil {
+		return err
+	}
+	// Call Decode() on our decoder instance, passing the target destination as
+	// the first parameter.
+	err = app.FormDecoder.Decode(dst, r.PostForm)
+	if err != nil {
+		// If we try to use an invalid target destination, the Decode() method
+		// will return an error with the type *form.InvalidDecoderError.We use
+		// errors.As() to check for this and raise a panic rather than returning
+		// the error.
+		var invalidDecoderError *form.InvalidDecoderError
+
+		if errors.As(err, &invalidDecoderError) {
+			panic(err)
+		}
+
+		// For all other errors, we return them as normal.
+		return err
+	}
+	return nil
+}
+```
+Note: Using the erros.As: the form.InvalidDecoderError implements error interface as a method pointer receiver. So, the correct way to test if error is from the specific type is:
+
+```
+var invalidDecoderError *form.InvalidDecoderError
+		if errors.As(err, &invalidDecoderError) {
+			panic(err)
+		}
+```
+If it had been declared as such:
+```
+var invalidDecoderError form.InvalidDecoderError
+```
+the errors.As would raise a panic, because form.InvalidDecoderError doesn't implement error as a value receiver.
+
+- Insert the Decoder dependency
+
+```
+main.go
+
+formDecoder := form.NewDecoder()
+
+	// And add it to the application dependencies.
+	app := &Application{
+		InfoLog:       infoLog,
+		ErrorLog:      errorLog,
+		Snippets:      &models.SnippetModel{DB: db},
+		StaticDir:     cfg.StaticDir,
+		TemplateCache: templateCache,
+		FormDecoder:   formDecoder,
+	}
+
+```
+- Using the helper method in handlers:
+
+```
+handlers.go
+
+// Update our snippetCreateForm struct to include struct tags which tell the
+// decoder how to map HTML form values into the different struct fields. So, for
+// example, here we're telling the decoder to store the value from the HTML form
+// input with the name "title" in the Title field. The struct tag `form:"-"`
+// tells the decoder to completely ignore a field during decoding.
+type snippetCreateForm struct {
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires""`
+	validator.Validator `form:"-"`
+}
+
+func (app *Application) SnippetCreatePostHandler() http.Handler {
+  ...
+  // Declare a new empty instance of the snippetCreateForm struct.
+  var form snippetCreateForm
+  
+  err = app.decodePostForm(r, &form)
+  if err != nil {
+			app.clientError(w, http.StatusBadRequest)
+			return
+   }
+   .....
+  
+}
+```

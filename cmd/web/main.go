@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"github.com/go-playground/form/v4"
 	_ "github.com/go-sql-driver/mysql" // New import
 	"github.com/liviu-moraru/snippetbox/config"
 	"github.com/liviu-moraru/snippetbox/internal/models"
@@ -35,12 +36,17 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	// Initialize a decoder instance...
+	formDecoder := form.NewDecoder()
+
+	// And add it to the application dependencies.
 	app := &Application{
 		InfoLog:       infoLog,
 		ErrorLog:      errorLog,
 		Snippets:      &models.SnippetModel{DB: db},
 		StaticDir:     cfg.StaticDir,
 		TemplateCache: templateCache,
+		FormDecoder:   formDecoder,
 	}
 
 	srv := &http.Server{
