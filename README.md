@@ -418,11 +418,16 @@ func (app *Application) maxBytesError(w http.ResponseWriter, status int) {
 - All the snippetCreateForm struct fields are deliberately exported (i.e. start with a capital letter). **This is because struct fields must be exported in order to be read by the html/template package when rendering the template**.
 - In handlers.go, line 146 we can pass the address of the form variable instead of a copy of the struct.
 
-  ```go
+```
 if len(form.FieldErrors) > 0 {
-  data := app.newTemplateData()
-  data.Form = &form // Instead of data.Form = form
-  app.render(w, http.StatusUnprocessableEntity, "create.tmpl", data)
+data := app.newTemplateData()
+data.Form = &form // Instead of data.Form = form
+app.render(w, http.StatusUnprocessableEntity, "create.tmpl", data)
 return
+...
 }
-  ```
+```
+
+# 8.5 Creating validation helpers
+
+- Embedding structs in Go, see [good introduction](https://eli.thegreenplace.net/2020/embedding-in-go-part-1-structs-in-structs/)
