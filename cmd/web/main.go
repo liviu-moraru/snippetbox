@@ -3,13 +3,16 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/go-playground/form/v4"
-	_ "github.com/go-sql-driver/mysql" // New import
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/liviu-moraru/snippetbox/config"
 	"github.com/liviu-moraru/snippetbox/internal/models"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 var cfg config.Configuration
@@ -39,14 +42,23 @@ func main() {
 	// Initialize a decoder instance...
 	formDecoder := form.NewDecoder()
 
-	// And add it to the application dependencies.
+	// Use the scs.New() function to initialize a new session manager. Then we
+	// configure it to use our MySQL database as the session store, and set a
+	// lifetime of 12 hours (so that sessions automatically expire 12 hours
+	// after first being created).
+	sessionManager := scs.New()
+	sessionManager.Store = mysqlstore.New(db)
+	sessionManager.Lifetime = 12 * time.Hour
+
+	// And add the session manager to our application dependencies.
 	app := &Application{
-		InfoLog:       infoLog,
-		ErrorLog:      errorLog,
-		Snippets:      &models.SnippetModel{DB: db},
-		StaticDir:     cfg.StaticDir,
-		TemplateCache: templateCache,
-		FormDecoder:   formDecoder,
+		InfoLog:        infoLog,
+		ErrorLog:       errorLog,
+		Snippets:       &models.SnippetModel{DB: db},
+		StaticDir:      cfg.StaticDir,
+		TemplateCache:  templateCache,
+		FormDecoder:    formDecoder,
+		SessionManager: sessionManager,
 	}
 
 	srv := &http.Server{
