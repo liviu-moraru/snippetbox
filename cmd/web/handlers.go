@@ -20,7 +20,7 @@ func (app *Application) HomeHandler() http.Handler {
 			return
 		}
 
-		data := app.newTemplateData()
+		data := app.newTemplateData(r)
 		data.Snippets = snippets
 
 		app.render(w, http.StatusOK, "home.tmpl", data)
@@ -48,7 +48,7 @@ func (app *Application) SnippetViewHandler() http.Handler {
 			return
 		}
 
-		data := app.newTemplateData()
+		data := app.newTemplateData(r)
 		data.Snippet = snippet
 
 		app.render(w, http.StatusOK, "view.tmpl", data)
@@ -56,7 +56,7 @@ func (app *Application) SnippetViewHandler() http.Handler {
 }
 
 func (app *Application) snippetCreate(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateData()
+	data := app.newTemplateData(r)
 
 	data.Form = snippetCreateForm{
 		Expires: 365,
@@ -105,7 +105,7 @@ func (app *Application) SnippetCreatePostHandler() http.Handler {
 		// field. Note that we use the HTTP status code 422 Unprocessable Entity
 		// when sending the response to indicate that there was a validation error.
 		if !form.Valid() {
-			data := app.newTemplateData()
+			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, http.StatusUnprocessableEntity, "create.tmpl", data)
 			return
@@ -118,6 +118,10 @@ func (app *Application) SnippetCreatePostHandler() http.Handler {
 			app.serverError(w, err)
 			return
 		}
+
+		// Use the Put() method to add a string value ("Snippet successfully
+		// created!") and the corresponding key ("flash") to the session data.
+		app.SessionManager.Put(r.Context(), "flash", "Snippet successfully created!")
 
 		http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 	})

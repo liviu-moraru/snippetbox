@@ -49,6 +49,9 @@ func main() {
 	sessionManager := scs.New()
 	sessionManager.Store = mysqlstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
+	/*cookie := &sessionManager.Cookie
+	cookie.Name = "mySecondSession"
+	cookie.Persist = false*/
 
 	// And add the session manager to our application dependencies.
 	app := &Application{

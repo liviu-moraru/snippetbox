@@ -116,3 +116,72 @@ func (app *Application) routes() http.Handler {
     return standard.Then(router)
 }
 ```
+# 9.3 Working with session data
+
+## Behind-the-scenes of session management
+
+- The session manager set a session cookie to the browser.
+- The session cookie contains the **session token** (session ID). This is a high-entropy random string.
+- The Expires and MaxAge for the cookie that are sent back with the response are set from the value of the sessionManager.Lifetime
+- By default, the sessionManager created by the scs.New() function, creates a Persistent cookie.
+- The name of the cookie is by default session.
+See [implementetion](https://github.com/alexedwards/scs/blob/12165213346f24f731a5b8f0e064dc41fea05935/session.go#L102)
+```
+// New returns a new session manager with the default options. It is safe for
+// concurrent use.
+func New() *SessionManager {
+	s := &SessionManager{
+		IdleTimeout: 0,
+		Lifetime:    24 * time.Hour,
+		Store:       memstore.New(),
+		Codec:       GobCodec{},
+		ErrorFunc:   defaultErrorFunc,
+		contextKey:  generateContextKey(),
+		Cookie: SessionCookie{
+			Name:     "session",
+			Domain:   "",
+			HttpOnly: true,
+			Path:     "/",
+			Persist:  true,
+			Secure:   false,
+			SameSite: http.SameSiteLaxMode,
+		},
+	}
+	return s
+}
+
+```
+
+- We can make some changes: 
+
+```
+sessionManager := scs.New()
+sessionManager.Store = mysqlstore.New(db)
+sessionManager.Lifetime = 1 * time.Hour
+cookie := &sessionManager.Cookie
+cookie.Name = "mySecondSession"
+cookie.Persist = false
+```
+
+- It’s important to emphasize that the session token is just a random string. In itself, it does’t
+  carry or convey any session data (like the flash message that we set in this chapter).
+- The data field in the database actuallu contains the session data. This field is a MySQL BLOB (binary large object) containing a **gob-encoded** representation of the session data.
+- The [gob package](https://pkg.go.dev/encoding/gob) is from the standard library
+
+> Package gob manages streams of gobs - binary values exchanged between an Encoder (transmitter) and a Decoder (receiver). 
+> A typical use is transporting arguments and results of remote procedure calls (RPCs) such as those provided by package "net/rpc".
+> 
+> The implementation compiles a custom codec for each data type in the stream and is most efficient when a single Encoder is used to transmit a stream of values, amortizing the cost of compilation.
+
+- Lastly, the final column in the database is the **expiry** time, after wich the session will no longer be considered valid.
+
+> So, what happens in our application is that the **LoadAndSave** middleware checks each incoming request for a session cookie. 
+> If a session cookie is present, it reads the session token and retrieves the corresponding session data from the database (while also checking that the
+session hasn’t expired).
+> It then adds the session data to the request context so it can be used
+in your handlers.
+> Any changes that you make to the session data in your handlers are updated in the request context, and then the LoadAndSave middleware updates the database with any changes to the session data before it returns.
+
+- So, LoadAndSave middleware process the request before other middleware and the response after these middleware finished handling the request.
+- When processing the response, LoadAndSave commits the changes made to the session data in the request context by other middlewares into the store.
+

@@ -90,9 +90,10 @@ func (app *Application) render(w http.ResponseWriter, status int, page string, d
 // Create an newTemplateData() helper, which returns a pointer to a templateData
 // struct initialized with the current year. Note that we're not using the
 // *http.Request parameter here at the moment, but we will do later in the book.
-func (app *Application) newTemplateData() *templateData {
+func (app *Application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear: time.Now().Year(),
+		Flash:       app.SessionManager.PopString(r.Context(), "flash"),
 	}
 }
 
