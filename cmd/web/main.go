@@ -22,7 +22,6 @@ func main() {
 	flag.StringVar(&cfg.Addr, "addr", ":4000", "HTTP network address")
 	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
 	flag.StringVar(&cfg.DSN, "dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
-
 	flag.Parse()
 
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime|log.LUTC)

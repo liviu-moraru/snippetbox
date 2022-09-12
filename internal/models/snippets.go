@@ -15,7 +15,6 @@ type Snippet struct {
 	Content string
 	Created time.Time
 	Expires time.Time
-	Newcol  sql.NullString
 }
 
 // SnippetModel Define a SnippetModel type which wraps a sql.DB connection pool.
@@ -55,12 +54,12 @@ func (m *SnippetModel) Insert(title string, content string, expires int) (int, e
 
 // Get This will return a specific snippet based on its id.
 func (m *SnippetModel) Get(id int) (*Snippet, error) {
-	stmt := `SELECT id, title, content, created, expires, newcol FROM snippets
+	stmt := `SELECT id, title, content, created, expires FROM snippets
 	WHERE expires > UTC_TIMESTAMP() and id = ?`
 
 	s := &Snippet{}
 
-	err := m.DB.QueryRow(stmt, id).Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires, &s.Newcol)
+	err := m.DB.QueryRow(stmt, id).Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
 	if err != nil {
 		// If the query returns no rows, then row.Scan() will return a
 		// sql.ErrNoRows error. We use the errors.Is() function check for that
