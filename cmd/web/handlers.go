@@ -140,3 +140,9 @@ func (app *Application) NoDirListingHandler(d http.Dir) http.Handler {
 		app.notFound(w)
 	})
 }
+
+func httpRedirect(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r,
+		"https://"+r.Host+r.URL.String(),
+		http.StatusMovedPermanently)
+}

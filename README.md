@@ -8,5 +8,6 @@
 6. [Chapter 9. Stateful HTTP](stateful-http.md)
 7. [Install on Raspberry - Kali Linux](install-on-raspberry.md)
 8. [Install certificate on Raspberry](install-certificate-on-raspberry.md)
+9. [Chapter 10. Security improvements](security-improvements.md)
 
 
