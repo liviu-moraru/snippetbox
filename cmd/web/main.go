@@ -19,7 +19,7 @@ var cfg config.Configuration
 
 func main() {
 
-	flag.StringVar(&cfg.Addr, "addr", ":4000", "HTTP network address")
+	flag.StringVar(&cfg.Addr, "addr", ":4443", "HTTP network address")
 	flag.StringVar(&cfg.StaticDir, "static-dir", "./ui/static", "Path to static assets")
 	flag.StringVar(&cfg.DSN, "dsn", "web:pass@/snippetbox?parseTime=true", "MySQL data source name")
 	flag.Parse()
@@ -52,6 +52,12 @@ func main() {
 	cookie.Name = "mySecondSession"
 	cookie.Persist = false*/
 
+	// Make sure that the Secure attribute is set on our session cookies.
+	// Setting this means that the cookie will only be sent by a user's web
+	// browser when a HTTPS connection is being used (and won't be sent over an
+	// unsecure HTTP connection).
+	sessionManager.Cookie.Secure = true
+
 	// And add the session manager to our application dependencies.
 	app := &Application{
 		InfoLog:        infoLog,
@@ -70,7 +76,7 @@ func main() {
 	}
 
 	infoLog.Printf("Starting server on %s\n", cfg.Addr)
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)
 
 }
