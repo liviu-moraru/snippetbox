@@ -59,11 +59,13 @@ func main() {
 	// unsecure HTTP connection).
 	sessionManager.Cookie.Secure = true
 
-	// And add the session manager to our application dependencies.
+	// Initialize a models.UserModel instance and add it to the application
+	// dependencies.
 	app := &Application{
 		InfoLog:        infoLog,
 		ErrorLog:       errorLog,
 		Snippets:       &models.SnippetModel{DB: db},
+		Users:          &models.UserModel{DB: db},
 		StaticDir:      cfg.StaticDir,
 		TemplateCache:  templateCache,
 		FormDecoder:    formDecoder,

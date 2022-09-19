@@ -8,11 +8,12 @@ import (
 	"log"
 )
 
-// Application Add a new sessionManager field to the application struct.
+// Application Add a new users field to the application struct.
 type Application struct {
 	InfoLog        *log.Logger
 	ErrorLog       *log.Logger
 	Snippets       *models.SnippetModel
+	Users          *models.UserModel
 	StaticDir      string
 	TemplateCache  map[string]*template.Template
 	FormDecoder    *form.Decoder

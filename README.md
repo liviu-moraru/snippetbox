@@ -9,5 +9,5 @@
 7. [Install on Raspberry - Kali Linux](install-on-raspberry.md)
 8. [Install certificate on Raspberry](install-certificate-on-raspberry.md)
 9. [Chapter 10. Security improvements](security-improvements.md)
-
+10. [Chapter 11. User authentication](user-authentication.md)
 
