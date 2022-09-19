@@ -127,6 +127,26 @@ func (app *Application) SnippetCreatePostHandler() http.Handler {
 	})
 }
 
+func (app *Application) userSignup(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Display a HTML form for signing up a new user...")
+}
+
+func (app *Application) userSignupPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Create a new user...")
+}
+
+func (app *Application) userLogin(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Display a HTML form for logging in a user...")
+}
+
+func (app *Application) userLoginPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Authenticate and login the user...")
+}
+
+func (app *Application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "Logout the user...")
+}
+
 func (app *Application) NoDirListingHandler(d http.Dir) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		params := httprouter.ParamsFromContext(r.Context())
