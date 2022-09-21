@@ -1,7 +1,9 @@
 package validator_test
 
 import (
+	"fmt"
 	"github.com/liviu-moraru/snippetbox/internal/validator"
+	"golang.org/x/crypto/bcrypt"
 	"testing"
 )
 
@@ -33,5 +35,18 @@ func TestValidator_AddFieldError(t *testing.T) {
 	v.AddFieldError("content", "My second content")
 	if v.FieldErrors == nil || v.FieldErrors["content"] != "My first content" {
 		t.Error("Error adding an existing key")
+	}
+}
+
+func TestPasswordHashFunction(t *testing.T) {
+	hash, err := bcrypt.GenerateFromPassword([]byte("my plain text password"), 12)
+	if err != nil {
+		t.Fatal("Encrypt error")
+	}
+	fmt.Println(string(hash), len(hash))
+	hash2 := []byte(string(hash))
+	err = bcrypt.CompareHashAndPassword(hash2, []byte("my plain text password"))
+	if err != nil {
+		t.Fatal("Comparison error")
 	}
 }
