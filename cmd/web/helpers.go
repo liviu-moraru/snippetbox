@@ -94,6 +94,7 @@ func (app *Application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
 		CurrentYear: time.Now().Year(),
 		Flash:       app.SessionManager.PopString(r.Context(), "flash"),
+		User:        app.SessionManager.GetString(r.Context(), "authenticatedUserID"),
 	}
 }
 

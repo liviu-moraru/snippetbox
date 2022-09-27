@@ -84,3 +84,44 @@ Total length of output: 3 + 3 + 54 = 60 bytes
 
 - 
 
+### 11.4 User login
+
+- In method userLoginPost, after authentication was succeeded, user the RenewToken() method on the current session to change the session ID
+  - It's good practice to generate a new session ID when the authentication state or privilege levels changes for the user (e.g. login and logout operations).
+  - After RenewToken() is call, when processing the response, the scs.SessionManager.LoadAndSave middleware will delete the previous record in the sessions database for the current user, create a new record and send a new cookie to the client. When deleting the session and creating a new one, this one will retain any data associated with the session.
+  - It's good practice to do this before login to mitigate the risk of a **session fixation
+    attack**. See [OWASP Session Management Cheat Sheet](https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/Session_Management_Cheat_Sheet.md#renew-the-session-id-after-any-privilege-level-change)
+
+- How to check whether the hashed password and plain-text password provided match.
+
+```
+users.go
+func (m *UserModel) Authenticate(email string, password string) (*User, error) {
+	stmt := `SELECT id, name, hashed_password FROM users
+				WHERE email = ?`
+	u := &User{}
+	err := m.DB.QueryRow(stmt, email).Scan(&u.ID, &u.Name, &u.HashedPassword)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
+	}
+
+	// Check whether the hashed password and plain-text password provided match.
+	// If they don't, we return the ErrInvalidCredentials error.
+	err = bcrypt.CompareHashAndPassword(u.HashedPassword, []byte(password))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return nil, ErrInvalidCredentials
+		} else {
+			return nil, err
+		}
+
+	}
+	return u, nil
+}
+
+```
+  
+
