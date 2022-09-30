@@ -151,4 +151,143 @@ func (app *Application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
+## 11.6 User authorization
 
+- IsAuthenticated helper method
+```
+helpers.go
+
+func (app *Application) isAuthenticated(r *http.Request) bool {
+	return app.SessionManager.Exists(r.Context(), "authenticatedUserID")
+}
+```
+- Update templateData struct and newTemplateData method
+
+```
+templates.go
+
+type templateData struct {
+...
+	IsAuthenticated bool
+}
+
+helpers.go
+
+func (app *Application) newTemplateData(r *http.Request) *templateData {
+	return &templateData{
+	...
+		IsAuthenticated: app.isAuthenticated(r),
+	}
+}
+```
+
+- Add requireAuthentication middleware
+
+```
+middleware.go
+
+func (app *Application) requireAuthentication(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// If the user is not authenticated, redirect them to the login page and
+		// return from the middleware chain so that no subsequent handlers in
+		// the chain are executed.
+		if !app.isAuthenticated(r) {
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			return
+		}
+		// Otherwise set the "Cache-Control: no-store" header so that pages
+		// require authentication are not stored in the users browser cache (or
+		// other intermediary cache).
+		w.Header().Add("Cache-Control", "no-store")
+
+		// And call the next handler in the cache
+		next.ServeHTTP(w, r)
+	})
+}
+
+```
+  - Note: The Cache-Control no-store response directive indicates that any caches of amy kind (private or shared) should not store this response. [See](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control)
+
+- Add protected routes
+
+```
+routes.go
+
+func (app *Application) routes() http.Handler {
+...
+// Unprotected application routes using the "dynamic" middleware chain.
+	dynamic := alice.New(app.SessionManager.LoadAndSave)
+
+	router.Handler(http.MethodGet, "/", dynamic.Then(app.HomeHandler()))
+	...
+
+	// Protected (authenticated-only) application routes, using a new "protected"
+	// middleware chain which includes the requireAuthentication middleware.
+	protected := dynamic.Append(app.requireAuthentication)
+
+	router.Handler(http.MethodGet, "/snippet/create", protected.ThenFunc(app.snippetCreate))
+	...
+
+	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
+	return standard.Then(router)
+}
+```
+
+- Change nav.tmpl
+
+```
+nav.tmpl
+
+{{define "nav"}}
+<nav>
+    <div>
+        <a href="/">Home</a>
+        <!-- Toggle the link based on authentication status -->
+        {{if .IsAuthenticated}}
+            <a href="/snippet/create">Create snippet</a>
+        {{end}}
+    </div>
+    <div>
+        <!-- Toggle the link based on authentication status -->
+        {{if .IsAuthenticated}}
+            <form action="/user/logout" method="post">
+                <button>Logout</button>
+            </form>
+        {{else}}
+            <a href="/user/signup">Signup</a>
+            <a href="/user/login">Login</a>
+        {{end}}
+
+    </div>
+</nav>
+{{end}}
+
+```
+- Check redirection to login with curl
+
+```
+curl -i -X POST https://lm58.tplinkdns.com/snippet/create
+
+Response:
+HTTP/2 303 
+content-security-policy: default-src 'self'; style-src 'self' fonts.googleapis.com; font-src fonts.gstatic.com
+location: /user/login
+referrer-policy: origin-when-cross-origin
+vary: Cookie
+x-content-type-options: nosniff
+x-frame-options: deny
+x-xss-protection: 0
+content-length: 0
+date: Fri, 30 Sep 2022 15:05:07 GMT
+```
+
+- If you have a self-signed certificate, add -k (--insecure) option
+
+```
+curl -ki -X POST https://lm58.tplinkdns.com/snippet/create
+```
+- If you want to see the redirected page:
+
+```
+curl -i -L -X POST https://lm58.tplinkdns.com/snippet/create
+```

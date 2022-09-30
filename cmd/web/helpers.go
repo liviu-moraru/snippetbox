@@ -92,9 +92,9 @@ func (app *Application) render(w http.ResponseWriter, status int, page string, d
 // *http.Request parameter here at the moment, but we will do later in the book.
 func (app *Application) newTemplateData(r *http.Request) *templateData {
 	return &templateData{
-		CurrentYear: time.Now().Year(),
-		Flash:       app.SessionManager.PopString(r.Context(), "flash"),
-		User:        app.SessionManager.GetString(r.Context(), "authenticatedUserID"),
+		CurrentYear:     time.Now().Year(),
+		Flash:           app.SessionManager.PopString(r.Context(), "flash"),
+		IsAuthenticated: app.isAuthenticated(r),
 	}
 }
 
@@ -127,4 +127,10 @@ func (app *Application) decodePostForm(r *http.Request, dst any) error {
 	}
 
 	return nil
+}
+
+// Return true if the current request is from an authenticated user, otherwise
+// return false.
+func (app *Application) isAuthenticated(r *http.Request) bool {
+	return app.SessionManager.Exists(r.Context(), "authenticatedUserID")
 }
