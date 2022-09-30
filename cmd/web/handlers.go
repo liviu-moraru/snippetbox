@@ -258,7 +258,23 @@ func (app *Application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Logout the user...")
+	// Use the RenewToken() method on the current session to change the session
+	// ID again.
+	err := app.SessionManager.RenewToken(r.Context())
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	// Remove the authenticatedUserID from the session data so that the user is
+	// 'logged out'.
+	app.SessionManager.Remove(r.Context(), "authenticatedUserID")
+	// Add a flash message to the session to confirm to the user that they've been
+	// logged out.
+	app.SessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
+
+	// Add a flash message to the session to confirm to the user that they've been
+	// logged out.
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func (app *Application) NoDirListingHandler(d http.Dir) http.Handler {

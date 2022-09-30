@@ -6,7 +6,7 @@
     </div>
     <div>
         <a href="/user/signup">Signup</a>
-        <a href="/user/login">Login</a>
+        {{if .User}}{{.User}}{{else}}<a href="/user/login">Login</a>{{end}}
         <form action="/user/logout" method="post">
             <button>Logout</button>
         </form>

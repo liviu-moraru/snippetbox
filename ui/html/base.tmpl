@@ -21,10 +21,6 @@
         {{with .Flash}}
             <div class="flash">{{.}}</div>
         {{end}}
-        <!-- Test display username after login -->
-        {{with .User}}
-            <div class="flash">{{.}}</div>
-        {{end}}
         {{template "main" .}}
     </main>
     <!-- {{block "sidebar" .}}

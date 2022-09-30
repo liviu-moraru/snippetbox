@@ -13,7 +13,7 @@ created DATETIME NOT NULL
 
 ALTER TABLE users ADD CONSTRAINT users_uc_email UNIQUE (email);
 ```
-### 11.3 User signup and password encryption
+## 11.3 User signup and password encryption
 
 - We're not re-displaying the password if the form fails validations. This is because we don't want there to be [any risk](https://ux.stackexchange.com/questions/20418/when-form-submission-fails-password-field-gets-blanked-why-is-that-the-case) of the browser caching the plain-text password entered by the user.
 - Validator: Matches regular expression
@@ -84,7 +84,7 @@ Total length of output: 3 + 3 + 54 = 60 bytes
 
 - 
 
-### 11.4 User login
+## 11.4 User login
 
 - In method userLoginPost, after authentication was succeeded, user the RenewToken() method on the current session to change the session ID
   - It's good practice to generate a new session ID when the authentication state or privilege levels changes for the user (e.g. login and logout operations).
@@ -123,5 +123,32 @@ func (m *UserModel) Authenticate(email string, password string) (*User, error) {
 }
 
 ```
-  
+
+## 11.5 User logout
+
+
+```
+handlers.go
+
+func (app *Application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
+	// Use the RenewToken() method on the current session to change the session
+	// ID again.
+	err := app.SessionManager.RenewToken(r.Context())
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+	// Remove the authenticatedUserID from the session data so that the user is
+	// 'logged out'.
+	app.SessionManager.Remove(r.Context(), "authenticatedUserID")
+	// Add a flash message to the session to confirm to the user that they've been
+	// logged out.
+	app.SessionManager.Put(r.Context(), "flash", "You've been logged out successfully!")
+
+	// Add a flash message to the session to confirm to the user that they've been
+	// logged out.
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+```
+
 
