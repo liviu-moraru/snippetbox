@@ -10,3 +10,4 @@ docker exec -it mysql mysql -uroot -pmy-passw  snippetbox -e "INSERT INTO snippe
 docker exec -it mysql mysql -uroot -pmy-passw  snippetbox -e "CREATE USER 'web'@'%';GRANT SELECT, INSERT, UPDATE, DELETE ON snippetbox.* TO 'web'@'%';ALTER USER 'web'@'%' IDENTIFIED BY 'pass';"
 docker exec -it mysql mysql -uroot -pmy-passw  snippetbox -e "CREATE TABLE sessions (token CHAR(43) PRIMARY KEY,data BLOB NOT NULL,expiry TIMESTAMP(6) NOT NULL);"
 docker exec -it mysql mysql -uroot -pmy-passw  snippetbox -e "CREATE INDEX sessions_expiry_idx ON sessions (expiry);"
+docker exec -it mysql mysql -uroot -pmy-passw  snippetbox -e "CREATE TABLE users ( id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, hashed_password CHAR(60) NOT NULL, created DATETIME NOT NULL ); ALTER TABLE users ADD CONSTRAINT users_uc_email UNIQUE (email);"

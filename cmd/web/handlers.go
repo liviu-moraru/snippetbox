@@ -182,7 +182,7 @@ func (app *Application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 	// their signup worked.
 	app.SessionManager.Put(r.Context(), "flash", "Your signup was successful. Please log in.")
 
-	http.Redirect(w, r, "/users/login", http.StatusSeeOther)
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
 
 // Create a new userLoginForm struct.
